@@ -13,6 +13,7 @@ const post_router_1 = require("../app/modules/post/post.router");
 const notification_router_1 = require("../app/modules/notification/notification.router");
 const comment_router_1 = require("../app/modules/comment/comment.router");
 const analysis_router_1 = require("../app/modules/analysis/analysis.router");
+const review_router_1 = require("../app/modules/review/review.router");
 const reaction_router_1 = require("../app/modules/reaction/reaction.router");
 const bookmark_router_1 = require("../app/modules/bookmark/bookmark.router");
 const router = express_1.default.Router();
@@ -24,6 +25,10 @@ const modules = [
     {
         path: "/user",
         router: user_router_1.UserRouter,
+    },
+    {
+        path: "/review",
+        router: review_router_1.ReviewRouter,
     },
     {
         path: "/ai_model",

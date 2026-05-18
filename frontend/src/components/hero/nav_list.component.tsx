@@ -145,7 +145,7 @@ const NavListComponent: React.FC = () => {
               <Link to="/login" className="text-gray-400 py-2">LOGIN</Link>
             )
           }
-        </div >
+        </div>
       )}
       </div>
     </header>

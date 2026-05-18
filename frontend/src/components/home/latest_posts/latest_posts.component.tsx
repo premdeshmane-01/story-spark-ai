@@ -45,7 +45,7 @@ const LatestPostsComponent = () => {
                     <i className="far fa-comment mr-1"></i> {post.commentsCount}
                   </span>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   {post.topic.map((topic) => (
                     <span
                       key={topic._id}
