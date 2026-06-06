@@ -97,24 +97,26 @@ const updateDailyStreak = async (userId: string) => {
 
 const addXp = async (userId: string, amount: number, reason: string) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        $inc: { "gamification.xp": amount },
-      },
-      { new: true }
+    await User.updateOne(
+      { _id: userId },
+      [
+        {
+          $set: {
+            "gamification.xp": { $add: [{ $ifNull: ["$gamification.xp", 0] }, amount] }
+          }
+        },
+        {
+          $set: {
+            "gamification.level": {
+              $max: [
+                { $ifNull: ["$gamification.level", 1] },
+                { $add: [{ $floor: { $sqrt: { $divide: ["$gamification.xp", 100] } } }, 1] }
+              ]
+            }
+          }
+        }
+      ]
     );
-
-    if (!updatedUser?.gamification) return;
-
-    const newXp = updatedUser.gamification.xp || 0;
-    const newLevel = calculateLevel(newXp);
-
-    if (newLevel > (updatedUser.gamification.level || 1)) {
-      await User.findByIdAndUpdate(userId, {
-        $max: { "gamification.level": newLevel },
-      });
-    }
   } catch (error) {
     console.error(`Error adding XP for ${reason}:`, error);
   }
