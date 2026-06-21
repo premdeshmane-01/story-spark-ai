@@ -39,14 +39,14 @@
 ## About 🚀
 
 - story-spark-ai - [Website](https://storysparkai.vercel.app/)
-- **`StorySparkAi`** is an open-source platform designed to empower creative minds by generating and showcasing AI-crafted stories from user prompts in a simple, engaging way.
-- With **`StorySparkAi`**, users can input an idea, explore multiple story variations, save their favorites, and leverage AI analysis to enhance their creative writing journey.
+- **`StorySparkAI`** is an open-source platform designed to empower creative minds by generating and showcasing AI-crafted stories from user prompts in a simple, engaging way.
+- With **`StorySparkAI`**, users can input an idea, explore multiple story variations, save their favorites, and leverage AI analysis to enhance their creative writing journey.
 
 <a id="features"></a>
 
 ## Features 💪
 
-- **Dark-Mode**: Toggle between light and dark themes for a comfortable reading experience.
+- **Dark Mode**: Toggle between light and dark themes for a comfortable reading experience.
 - **Google Login**: Sign in quickly and securely using your Google account.
 - **User Reviews**: Share your experience and explore reviews from the community.
 - **Subscription Plans**: Access unlimited story generation and team collaboration with paid plans.
@@ -69,7 +69,7 @@
    cd story-spark-ai
    ```
 
-2. **Install dependencies** (single install at the repo root — npm workspaces)
+2. **Install dependencies** (single install at the repo root — pnpm workspaces)
 
    ```bash
    pnpm install
@@ -78,7 +78,7 @@
 3. **Environment files**
 
    - Copy `backend/.env.example` → `backend/.env` and fill in all values (see [Environment variables](#environment-variables)).
-  - Copy `frontend/.env.example` → `frontend/.env` and set `VITE_BASE_URL` to your API base URL (e.g. `http://localhost:5000/api/v1` when the backend runs on port 5000). Optionally set `VITE_SOCKET_URL` for real-time notifications; the frontend uses your logged-in access token to join the notification room.
+   - Copy `frontend/.env.example` → `frontend/.env` and set `VITE_BASE_URL` to your API base URL (e.g., `http://localhost:5000/api/v1` when the backend runs on port 5000). Optionally set `VITE_SOCKET_URL` for real-time notifications; the frontend uses your logged-in access token to join the notification room.
 
    > Never commit `backend/.env` or `frontend/.env`. Only `.env.example` files belong in git.
 
@@ -133,7 +133,7 @@ Use **two** Vercel projects from this monorepo:
 
 <a id="environment-variables"></a>
 
-### Environment variables
+### Environment Variables
 
 After cloning, create your env files from the examples in the repo:
 
@@ -142,10 +142,9 @@ After cloning, create your env files from the examples in the repo:
 git clone https://github.com/ronisarkarexe/story-spark-ai.git
 cd story-spark-ai
 
-# 2. Install all dependencies (npm workspaces — single install)
-npm install
+# 2. Install all dependencies (pnpm workspaces — single install)
+pnpm install
 ```
-### Environment Variables
 
 Copy the example env files and fill in your values:
 
@@ -155,7 +154,7 @@ cp frontend/.env.example frontend/.env
 ```
 
 #### Backend (`backend/.env`)
-Variables marked Yes are required... Variables marked for a feature are only required when you use that feature.
+Variables marked **Yes** are required. Variables marked for a specific feature are only required when using that feature.
 
 #### 🖥️ Server Configuration (Backend)
 | Variable | Example | Required | Description |
@@ -200,7 +199,7 @@ Variables marked Yes are required... Variables marked for a feature are only req
 #### 📧 Email Verification
 | Variable | Example | Required | Description |
 |----------|---------|----------|-------------|
-| `VERIFY_EMAIL` | `noreply@example.com` | ⚠️ Optional | Sender email for verification mails |
+| `VERIFY_EMAIL` | `noreply@example.com` | ⚠️ Optional | Sender email for verification emails |
 | `VERIFY_PASSWORD` | `app_password` | ⚠️ Optional | Email app password (not your login password) |
 
 #### 🔑 Google OAuth
@@ -305,7 +304,7 @@ This monorepo deploys as **two separate Vercel projects**:
 | 🖥️ Frontend | `frontend` | `storysparkai.vercel.app` |
 | ⚙️ Backend API | `backend` | `apistorysparkai.vercel.app` |
 
-**Frontend environment variables** *(set in Vercel dashboard → redeploy after changes)*:
+**Backend environment variables** *(set in Vercel dashboard)*:
 
 ```env
 DATABASE_URL=mongodb://localhost:27017/storysparkai
@@ -326,9 +325,9 @@ Variables prefixed with `VITE_` are exposed to the frontend by Vite. `VITE_SOCKE
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_BASE_URL` | Yes | Backend API base URL, e.g. `http://localhost:5000/api/v1` for local development. |
-| `VITE_SOCKET_URL` | No | Socket.IO server URL, e.g. `http://localhost:5000`. Optional unless you are using real-time notifications. |
-| `VITE_GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID from https://console.cloud.google.com. |
+| `VITE_BASE_URL` | Yes | Backend API base URL, e.g., `http://localhost:5000/api/v1` for local development. |
+| `VITE_SOCKET_URL` | No | Socket.IO server URL, e.g., `http://localhost:5000`. Optional unless you are using real-time notifications. |
+| `VITE_GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID from the [Google Cloud Console](https://console.cloud.google.com). |
 
 Example frontend `.env`:
 
@@ -384,7 +383,7 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
 
 
-<a id="contributing"></a>
+<a id="troubleshooting"></a>
 ## Troubleshooting 🛠️
 
 Running into issues during setup? Here are the most common errors and how to fix them.
@@ -454,7 +453,9 @@ git commit -m "chore: regenerate package-lock.json"
 
 ---
 
-> > 💡 **Still stuck?** Open an issue or check existing ones — your problem may already have a solution!
+> 💡 **Still stuck?** Open an issue or check existing ones — your problem may already have a solution!
+
+<a id="contributing"></a>
 
 ## Contributing 👨‍💻
 
@@ -465,7 +466,7 @@ Contributions make the open source community such an amazing place to learn, ins
 
 ## Contributors 🤝
 
-Thanks to everyone who has helped build **Story Spark AI**. This grid updates automatically from [GitHub contributors](https://github.com/ronisarkarexe/story-spark-ai/graphs/contributors).
+Thanks to everyone who has helped build **StorySparkAI**. This grid updates automatically from [GitHub contributors](https://github.com/ronisarkarexe/story-spark-ai/graphs/contributors).
 
 <a href="https://github.com/ronisarkarexe/story-spark-ai/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ronisarkarexe/story-spark-ai&max=500&columns=12" alt="Contributors" />
@@ -521,10 +522,6 @@ Thanks to everyone who has helped build **Story Spark AI**. This grid updates au
 
 Thank you for contributing to our open-source project! We appreciate your support 🚀 <br>
 Don't forget to leave a star ⭐
-
-### Proposed Feature: Trending Topics & UI Enhancements
-- Added responsive writing genres (Fantasy, Mystery, Romance) next to recommended writers.
-- Implemented a clean 'How It Works' section to polish the landing page layout.
 
 ### Proposed Feature: Trending Topics & UI Enhancements
 - Added responsive writing genres (Fantasy, Mystery, Romance) next to recommended writers.
