@@ -1,11 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useGetUsersListQuery } from "../../../redux/apis/user.api";
 import { User } from "../../../models/user";
 import LoadingAnimation from "../../loading/loading.component";
+import { Navigate } from "react-router-dom";
+import AuthContext from "../../auth.context";
+import { USER_ROLE } from "../../../constants/role";
 
 const UserListComponent = () => {
   const { data: users, isLoading } = useGetUsersListQuery(undefined);
   const [searchTerm, setSearchTerm] = useState("");
+const auth = useContext(AuthContext);
+
+if (
+  !auth?.user ||
+  (auth.user.role !== USER_ROLE.ADMIN &&
+    auth.user.role !== USER_ROLE.SUPER_ADMIN)
+) {
+  return <Navigate to="/dashboard" replace />;
+}
 
   const filteredUsers = (users?.data ?? []).filter((user: User) => {
     const searchValue = searchTerm.toLowerCase().trim();
@@ -122,7 +134,7 @@ const UserListComponent = () => {
                     <p className="text-sm text-slate-500">{user.subscriptionType}</p>
                   </td>
                   <td className="p-4 py-5">
-                    <p className="text-sm text-slate-500">{user.isApplyForWriter ? "YES" : "NO"}</p>
+                    <p className="text-sm text-slate-500">{(user as any).isApplyForWriter ? "YES" : "NO"}</p>
                   </td>
                 </tr>
               ))

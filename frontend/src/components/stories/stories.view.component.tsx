@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { getShortenedText, ITopicData, topicsData } from "./stories.utils";
+import CharacterProfileCard from "./CharacterProfileCard";
+import StoryGenreTransformation from "./StoryGenreTransformation";
+import StoryMoodDashboard from "./StoryMoodDashboard";
+import StoryTitleSuggestions from "./StoryTitleSuggestions";
+import StoryVersionHistory from "./StoryVersionHistory";
+import { CharacterProfile } from "./stories.utils";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { getShortenedText, ITopicData, topicsData, getWordCount, SELECTED_TOPIC_CLASSES } from "./stories.utils";
+import { formatReadingStats } from "../../utils/story-utils";
 import toast, { Toaster } from "react-hot-toast";
 import { useCreatePostMutation } from "../../redux/apis/post.api";
 import jsPDF from "jspdf";
+import StoryTranslator from "../translate/StoryTranslator";
 
 export interface IStories {
   uuid: string;
@@ -34,7 +43,11 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   const [selectTopics, setSelectTopics] = useState<ITopicData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [characterProfiles, setCharacterProfiles] = useState<CharacterProfile[]>([]);
+  const [profileLoading, setProfileLoading] = useState<boolean>(false);
+  const [showTranslator, setShowTranslator] = useState<boolean>(false);
   const [createPost] = useCreatePostMutation();
+  const [showGenreTransformation, setShowGenreTransformation] = useState<boolean>(false);
 
   useEffect(() => {
     setSelectTopics(topics.filter((topic) => topic.selected));
@@ -46,9 +59,50 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     }
   }, [stories]);
 
+useEffect(() => {
+  const autoSaveStory = async () => {
+    if (!selectedStory) return;
+
+    const post: IPost = {
+      ...selectedStory,
+      topic: selectTopics,
+    };
+
+    try {
+      await createPost(post).unwrap();
+      toast.success("Story auto-saved!");
+    } catch (error) {
+      console.error("Auto-save failed", error);
+    }
+  };
+
+  autoSaveStory();
+}, [selectedStory, isLogin, selectTopics]);
+
   const handelStorySelection = (story: IStories) => {
     setSelectedStory(story);
   };
+
+  const handleRestoreVersion = (restoredContent: string) => {
+  if (!selectedStory) return;
+
+  const updatedStory = {
+    ...selectedStory,
+    content: restoredContent,
+  };
+
+  setSelectedStory(updatedStory);
+
+  setStories(
+    stories.map((story) =>
+      story.uuid === selectedStory.uuid
+        ? updatedStory
+        : story
+    )
+  );
+
+  toast.success("Story version restored successfully!");
+};
 
   const handleTopicClick = (index: number) => {
     const updatedTopics = [...topics];
@@ -92,6 +146,43 @@ const handleExportPDF = () => {
     toast.error("Failed to export PDF.");
   }
 };
+
+const handleGenerateCharacterProfile = async () => {
+  if (!selectedStory) {
+    toast.error("No story selected!");
+    return;
+  }
+
+  setProfileLoading(true);
+
+  try {
+    // Replace with your backend API endpoint
+    const response = await fetch(
+      "/api/generate-character-profile",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          story: selectedStory.content,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    setCharacterProfiles(data.data);
+
+    toast.success("Character profiles generated!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to generate profiles.");
+  } finally {
+    setProfileLoading(false);
+  }
+};
+
   const handelPublishStory = async () => {
     if (!isLogin) {
       toast.error("Please login to publish the story.");
@@ -137,7 +228,6 @@ const handleExportPDF = () => {
   }
 
   return (
-<<<<<<< HEAD
     <div className="mt-16 px-4 sm:px-6 lg:px-8 max-w-8xl mx-auto pb-10">
       <style>
         {`
@@ -153,12 +243,6 @@ const handleExportPDF = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in-up">
         <div className="col-span-1 lg:col-span-8 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-=======
-    <div className="mt-16 px-4 sm:px-6 md:px-10 pb-10">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="col-span-1 lg:col-span-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
->>>>>>> upstream/main
             <div className="">
               <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400">
                 {selectedStory?.title}
@@ -202,9 +286,41 @@ const handleExportPDF = () => {
               <h3 className="text-xl font-bold text-slate-200 relative z-10">
                 Generated Story
               </h3>
-<<<<<<< HEAD
-              <span className="text-sm text-gray-800 relative z-10">
+              <div className="flex items-center gap-2 relative z-10">
+                {selectedStory && (
+                  <>
+                    <button
+                      type="button"
+                      className="rounded-lg px-4 py-2 bg-slate-700 text-slate-200 font-semibold cursor-pointer hover:bg-slate-600 transition-colors"
+                      onClick={handleCopyStory}
+                    >
+                      {isCopied ? "✓ Copied" : "📋 Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg px-4 py-2 bg-indigo-700 text-white font-semibold hover:bg-indigo-600 transition-colors"
+                      onClick={handleGenerateCharacterProfile}
+                    >
+                      {profileLoading ? "Generating..." : "👥 Characters"}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg px-4 py-2 bg-purple-700 text-slate-200 font-semibold cursor-pointer hover:bg-purple-600 transition-colors"
+                      onClick={handleExportPDF}
+                    >
+                      📄 Export PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg px-4 py-2 bg-emerald-700 text-white font-semibold cursor-pointer hover:bg-emerald-600 transition-colors"
+                      onClick={() => setShowTranslator(true)}
+                    >
+                      🌍 Translate
+                    </button>
+                  </>
+                )}
                 <button
+                  type="button"
                   className={`rounded-lg px-5 py-2 font-semibold flex items-center space-x-2 cursor-pointer bg-blue-600 text-white transition-all duration-200 ${
                     loading
                       ? "opacity-50 cursor-not-allowed"
@@ -215,50 +331,132 @@ const handleExportPDF = () => {
                 >
                   {loading ? "Publishing..." : "Publish"}
                 </button>
-              </span>
+              </div>
             </div>
-            <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed tracking-wide relative z-10">
-=======
-              <div className="flex items-center gap-2">
-  {selectedStory && (
-    <>
-      <button
-        type="button"
-        className="rounded-lg px-4 py-1 bg-gray-700 text-gray-200 font-semibold cursor-pointer"
-        onClick={handleCopyStory}
-      >
-        {isCopied ? "✓ Copied" : "📋 Copy"}
-      </button>
+            <div id="story-content" className="prose prose-invert max-w-none text-slate-300 leading-relaxed tracking-wide relative z-10">
+              <p className="break-words whitespace-pre-wrap">
+                {sentenceSegments.length > 0 ? (
+                  sentenceSegments.map((segment: StorySentenceSegment) => {
+                    const isActiveSentence =
+                      isNarrationActive &&
+                      narrationWordIndex >= segment.startWordIndex &&
+                      narrationWordIndex <= segment.endWordIndex;
 
-      <button
-        type="button"
-        className="rounded-lg px-4 py-1 bg-purple-700 text-gray-200 font-semibold cursor-pointer"
-        onClick={handleExportPDF}
-      >
-        📄 Export PDF
-      </button>
-    </>
-  )}
+                    const rawParts = segment.text.split(/(\s+)/);
+                    let wordOffset = 0;
 
-  <button
-    type="button"
-    className={`rounded-lg px-4 py-1 font-semibold flex items-center space-x-2 cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-gray-300 ${
-      loading
-        ? "opacity-50 cursor-not-allowed"
-        : "hover:shadow-lg hover:shadow-indigo-500/50"
-    }`}
-    onClick={handelPublishStory}
-    disabled={loading}
-  >
-    {loading ? "Publishing..." : "Publish"}
-  </button>
-</div>
+                    return (
+                      <span
+                        key={segment.id}
+                        className={isActiveSentence ? "text-slate-100 font-medium transition-colors duration-300" : undefined}
+                      >
+                        {rawParts.map((part, partIdx) => {
+                          if (part === "") return null;
+                          if (/^\s+$/.test(part)) {
+                            return part;
+                          }
+
+                          const absoluteWordIndex = segment.startWordIndex + wordOffset;
+                          wordOffset++;
+
+                          const isActiveWord = isNarrationActive && narrationWordIndex === absoluteWordIndex;
+
+                          if (isActiveWord) {
+                            return (
+                              <span
+                                key={partIdx}
+                                className="bg-indigo-500/30 text-indigo-300 rounded px-1 transition-all duration-150 active-narrated-word"
+                                data-active-word="true"
+                              >
+                                {part}
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <span key={partIdx}>
+                              {part}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    );
+                  })
+                ) : (
+                  DOMPurify.sanitize(selectedStory.content)
+                  (() => {
+                    const rawParts = selectedStory.content.split(/(\s+)/);
+                    let wordOffset = 0;
+                    return rawParts.map((part, partIdx) => {
+                      if (part === "") return null;
+                      if (/^\s+$/.test(part)) {
+                        return part;
+                      }
+
+                      const absoluteWordIndex = wordOffset;
+                      wordOffset++;
+
+                      const isActiveWord = isNarrationActive && narrationWordIndex === absoluteWordIndex;
+
+                      if (isActiveWord) {
+                        return (
+                          <span
+                            key={partIdx}
+                            className="bg-indigo-500/30 text-indigo-300 rounded px-1 transition-all duration-150 active-narrated-word"
+                            data-active-word="true"
+                          >
+                            {part}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <span key={partIdx}>
+                          {part}
+                        </span>
+                      );
+                    });
+                  })()
+                )}
+              </p>
             </div>
-            <div
-  id="story-content"
-  className="prose max-w-none text-gray-400"
->
->>>>>>> upstream/main
+
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 w-full box-border relative z-10">
+              <AudioPlayer 
+                ref={audioPlayerRef} 
+                text={selectedStory.content} 
+                title={selectedStory.title} 
+                onWordIndexChange={setNarrationWordIndex} 
+                onPlaybackStateChange={setNarrationState} 
+              />
+            </div>
+            <StoryVersionHistory
+              story={selectedStory}
+              onRestore={handleRestoreVersion}
+            />
+          </div>
+
+          {/* Alternate Endings Section */}
+          <div className="bg-white dark:bg-slate-800/60 backdrop-blur-xl border border-slate-200 dark:border-slate-700/50 rounded-2xl sm:rounded-3xl shadow-xl p-6 mt-2 relative overflow-hidden">
+            <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  Alternate Endings
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Explore alternate narrative styles for your story context.
+                </p>
+              </div>
+              {selectedStory.content !== originalStoryContent[selectedStory.uuid] && (
+                <button
+                  type="button"
+                  onClick={handleResetEnding}
+                  className="rounded-lg px-4 py-2 bg-red-100 dark:bg-red-950/40 hover:bg-red-200 dark:hover:bg-red-900/60 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700/50 font-semibold text-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <i className="fa-solid fa-rotate-left"></i> Reset to Original
+                </button>
               {selectedStory ? (
                 <p className="break-words">{selectedStory.content}</p>
               ) : (
@@ -266,6 +464,24 @@ const handleExportPDF = () => {
               )}
             </div>
           </div>
+          <div className="mt-6">
+  {characterProfiles.length > 0 && (
+    <>
+      <h3 className="text-xl font-bold text-white mb-4">
+        Character Profiles
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {characterProfiles.map((profile, index) => (
+          <CharacterProfileCard
+            key={index}
+            profile={profile}
+          />
+        ))}
+      </div>
+    </>
+  )}
+</div>
           <div className="mt-7">
             <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-xl p-6 mb-8">
               <h3 className="text-lg font-bold text-slate-200 mb-4">
@@ -299,6 +515,9 @@ const handleExportPDF = () => {
           </div>
         </div>
 
+        
+
+
         <div className="col-span-1 lg:col-span-4">
           <div className="mb-5">
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400">
@@ -312,11 +531,7 @@ const handleExportPDF = () => {
                   <img
                     src={selectedStory.imageURL}
                     alt="card-image"
-<<<<<<< HEAD
                     className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
-=======
-                    className="w-full h-32 sm:h-40 object-cover rounded-b-md"
->>>>>>> upstream/main
                   />
                 </div>
                 <div className="px-3 py-1">
@@ -339,7 +554,24 @@ const handleExportPDF = () => {
           </div>
         </div>
       </div>
+      {showGenreTransformation && selectedStory && (
+        <StoryGenreTransformation
+          story={{
+            title: selectedStory.title,
+            content: selectedStory.content,
+          }}
+          onClose={() => setShowGenreTransformation(false)}
+        />
+      )}
       <Toaster position="top-right" reverseOrder={false} />
+
+      {showTranslator && selectedStory && (
+        <StoryTranslator
+          story={selectedStory}
+          isLogin={isLogin}
+          onClose={() => setShowTranslator(false)}
+        />
+      )}
     </div>
   );
 };

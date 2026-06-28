@@ -9,9 +9,13 @@ const PHASES = [
   "Polishing every word…",
 ];
 
-const StoryGeneratingAnimation = () => {
+type StoryGeneratingAnimationProps = {
+  onCancel?: () => void;
+  isHighLatency?: boolean;
+};
+
+const StoryGeneratingAnimation = ({ onCancel, isHighLatency }: StoryGeneratingAnimationProps) => {
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const [progress, setProgress] = useState(20);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,17 +24,16 @@ const StoryGeneratingAnimation = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 88 ? 20 : prev + 0.4));
-    }, 60);
-    return () => clearInterval(interval);
-  }, []);
-
   const dots = [0, 1, 2, 3, 4, 5, 6, 7];
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-8 text-white backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+      aria-label="Story generation in progress"
+    >
+      <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-white/10 bg-slate-900/95 px-6 py-10 shadow-2xl shadow-indigo-950/40">
       {/* Orbiting dots around book icon */}
       <div className="relative w-32 h-32 flex items-center justify-center mb-8">
         {dots.map((i) => (
@@ -91,14 +94,37 @@ const StoryGeneratingAnimation = () => {
       </div>
 
       {/* Progress bar */}
-      <div className="w-72 h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div className="w-72 h-1.5 rounded-full bg-white/10 overflow-hidden mb-3">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.25, ease: "linear" }}
+          initial={{ width: "18%" }}
+          animate={{ width: ["18%", "88%", "18%"] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
-      <p className="text-gray-500 text-xs mt-3">Crafting your story with AI magic…</p>
+      
+      {isHighLatency ? (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-amber-400/90 text-sm mt-2 text-center"
+        >
+          Experiencing high demand or network latency...<br/>We're trying a fallback model!
+        </motion.p>
+      ) : (
+        <p className="text-gray-500 text-xs mt-1">Crafting your story with AI magic...</p>
+      )}
+
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="mt-6 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-colors duration-200 hover:bg-white/10 hover:text-white"
+        >
+          Cancel generation
+        </button>
+      )}
+      </div>
     </div>
   );
 };

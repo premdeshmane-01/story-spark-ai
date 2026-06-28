@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface PaginationProps {
   current: number;
@@ -17,43 +17,51 @@ const PaginationComponent: React.FC<PaginationProps> = ({
   const startItem = (current - 1) * pageSize + 1;
   const endItem = Math.min(current * pageSize, total);
 
+  const [jumpValue, setJumpValue] = useState("");
+  const [jumpError, setJumpError] = useState<string | null>(null);
+
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       onChange(page, pageSize);
     }
   };
 
-  const renderPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
+  const handleJumpSubmit = () => {
+    const page = Number(jumpValue);
+    if (!Number.isInteger(page) || page < 1 || page > totalPages) {
+      setJumpError(`Enter a page between 1 and ${totalPages}`);
+      return;
+    }
+    setJumpError(null);
+    handlePageChange(page);
+    setJumpValue("");
+  };
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
+  const handleJumpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleJumpSubmit();
+    }
+  };
+
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange(1, Number(e.target.value));
+  };
+
+  const renderPageNumbers = () => {
+    const pages: (number | string)[] = [];
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-
       let start = Math.max(2, current - 1);
       let end = Math.min(totalPages - 1, current + 1);
-
-      if (current <= 3) {
-        end = 4;
-      } else if (current >= totalPages - 2) {
-        start = totalPages - 3;
-      }
-
-      if (start > 2) {
-        pages.push("...");
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (end < totalPages - 1) {
-        pages.push("...");
-      }
+      if (current <= 3) end = 4;
+      else if (current >= totalPages - 2) start = totalPages - 3;
+      if (start > 2) pages.push("...");
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (end < totalPages - 1) pages.push("...");
       pages.push(totalPages);
     }
 
@@ -62,30 +70,23 @@ const PaginationComponent: React.FC<PaginationProps> = ({
         return (
           <span
             key={`ellipsis-${index}`}
-<<<<<<< HEAD
-            className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-slate-500"
-=======
-            className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500"
->>>>>>> upstream/main
+            className="inline-flex items-center px-2 py-1 text-sm text-slate-500 select-none"
           >
-            ...
+            …
           </span>
         );
       }
-
+      const isActive = current === pageNum;
       return (
         <button
           key={pageNum}
           onClick={() => handlePageChange(pageNum as number)}
-          className={`!rounded-button relative inline-flex items-center px-3 py-1 border text-sm font-medium transition-colors ${
-            current === pageNum
-<<<<<<< HEAD
-              ? "border-blue-500 bg-blue-600 text-white shadow-md"
-              : "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-=======
-              ? "border-custom bg-custom text-white"
-              : "border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-white"
->>>>>>> upstream/main
+          aria-label={`Go to page ${pageNum}`}
+          aria-current={isActive ? "page" : undefined}
+          className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-sm font-medium transition-colors ${
+            isActive
+              ? "bg-blue-600 text-white shadow-sm"
+              : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white"
           }`}
         >
           {pageNum}
@@ -95,49 +96,88 @@ const PaginationComponent: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-<<<<<<< HEAD
-        <div className="flex-1 text-sm text-slate-400">
-          Showing <span className="font-medium">{startItem}</span> to
-          <span className="font-medium"> {endItem}</span> of
-          <span className="font-medium"> {total}</span> results
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
+      <div className="flex items-center gap-2 text-sm text-slate-400">
+        <span>
+          Showing{" "}
+          <span className="font-medium text-slate-200">{startItem}</span> –{" "}
+          <span className="font-medium text-slate-200">{endItem}</span> of{" "}
+          <span className="font-medium text-slate-200">{total}</span> results
+        </span>
+        <select
+          value={pageSize}
+          onChange={handlePageSizeChange}
+          className="ml-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        >
+          {[10, 25, 50, 100].map((size) => (
+            <option key={size} value={size}>
+              {size} / page
+            </option>
+          ))}
+        </select>
+
+        {totalPages > 5 && (
+          <div className="flex items-center gap-1 ml-2">
+            <label htmlFor="jump-to-page" className="sr-only">
+              Go to page
+            </label>
+            <input
+              id="jump-to-page"
+              type="number"
+              min={1}
+              max={totalPages}
+              value={jumpValue}
+              onChange={(e) => {
+                setJumpValue(e.target.value);
+                if (jumpError) setJumpError(null);
+              }}
+              onKeyDown={handleJumpKeyDown}
+              placeholder={`1-${totalPages}`}
+              aria-label={`Go to page (1 to ${totalPages})`}
+              aria-invalid={jumpError ? "true" : "false"}
+              className="w-20 bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={handleJumpSubmit}
+              aria-label="Go to entered page"
+              className="inline-flex items-center justify-center px-3 h-8 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              Go
+            </button>
+            {jumpError && (
+              <span role="alert" className="text-xs text-red-400 ml-1">
+                {jumpError}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => handlePageChange(current - 1)}
+          disabled={current === 1}
+          aria-label="Go to previous page"
+          className="inline-flex items-center gap-1 px-3 h-8 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
+        >
+          <i className="fas fa-chevron-left text-xs opacity-70"></i>
+          Prev
+        </button>
+
+        <div className="flex items-center gap-1">
+          {renderPageNumbers()}
         </div>
-        <div className="flex items-center space-x-2">
-          <button
-            className="!rounded-button inline-flex items-center px-3 py-1 border border-slate-700 bg-slate-800 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
-=======
-        <div className="flex-1 text-sm text-gray-400">
-          Showing <span className="font-medium text-white">{startItem}</span> to
-          <span className="font-medium text-white"> {endItem}</span> of
-          <span className="font-medium text-white"> {total}</span> results
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            className="!rounded-button inline-flex items-center px-3 py-1 border border-gray-700 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
->>>>>>> upstream/main
-            disabled={current === 1}
-            onClick={() => handlePageChange(current - 1)}
-          >
-            <i className="fas fa-chevron-left text-xs mr-2 opacity-70"></i>
-            Previous
-          </button>
-          <span className="relative z-0 inline-flex space-x-1">
-            {renderPageNumbers()}
-          </span>
-          <button
-<<<<<<< HEAD
-            className="!rounded-button inline-flex items-center px-3 py-1 border border-slate-700 bg-slate-800 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
-=======
-            className="!rounded-button inline-flex items-center px-3 py-1 border border-gray-700 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
->>>>>>> upstream/main
-            disabled={current === totalPages}
-            onClick={() => handlePageChange(current + 1)}
-          >
-            Next
-            <i className="fas fa-chevron-right text-xs ml-2 opacity-70"></i>
-          </button>
-        </div>
+
+        <button
+          onClick={() => handlePageChange(current + 1)}
+          disabled={current === totalPages}
+          aria-label="Go to next page"
+          className="inline-flex items-center gap-1 px-3 h-8 rounded-md border border-slate-700 bg-slate-800 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
+        >
+          Next
+          <i className="fas fa-chevron-right text-xs opacity-70"></i>
+        </button>
       </div>
     </div>
   );

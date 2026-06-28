@@ -1,6 +1,6 @@
 import type { BaseQueryFn } from "@reduxjs/toolkit/query";
 import type { AxiosRequestConfig } from "axios";
-import { instance as AxiosInstance } from "./axionInstance";
+import { instance as AxiosInstance } from "./axiosInstance";
 import { IMeta, ResponseErrorType } from "../../types";
 
 const axiosBaseQuery =
@@ -19,15 +19,17 @@ const axiosBaseQuery =
     unknown,
     unknown
   > =>
-  async ({ url, method, data, params, contentType }) => {
+  async ({ url, method, data, params, contentType, headers }, api) => {
     try {
       const result = await AxiosInstance({
         url: baseUrl + url,
         method,
         data,
         params,
+        signal: api.signal,
         headers: {
           "Content-Type": contentType || "application/json",
+          ...headers,
         },
       });
       return {
@@ -37,6 +39,14 @@ const axiosBaseQuery =
       };
     } catch (axiosError) {
       const err = axiosError as ResponseErrorType;
+      if (api.signal.aborted) {
+        return {
+          error: {
+            status: "CANCELLED",
+            data: [{ path: "", message: "Story generation was cancelled." }],
+          },
+        };
+      }
       return {
         error: {
           status: err.statusCode,
